@@ -16,17 +16,28 @@ def main(path, label_path):
     train_count = test_count = cv_count = 0
     for root, _, files in os.walk(path):
         for f0 in files:
-            if not f0.endswith("csv"):
+            if not f0.lower().endswith(".f0"):
                 continue
-            pitch = [f0]
-            with open(os.path.join(root, f0), "r") as file:
-                for line in file:
-                    x = line.split(",")[1].strip()
-                    hz = float(x)
-                    bin = Convert.convert_hz_to_bin(hz) if hz >= 10 else 0
-                    pitch.append(str(round(bin)))
 
-            massage = " ".join(pitch) + "\n"
+            rel_path = os.path.relpath(os.path.join(root, f0), start=path).replace("\\", "/")
+            pitch = [rel_path]
+
+            with open(os.path.join(root, f0), "r", encoding="utf-8", errors="ignore") as file:
+                for line in file:
+                    parts = line.strip().split()
+                    if len(parts) < 2:
+                        continue
+                    try:
+                        hz = float(parts[1])
+                    except:
+                        continue
+                    bin_val = Convert.convert_hz_to_bin(hz) if hz >= 10 else 0
+                    pitch.append(str(round(bin_val)))
+
+            if len(pitch) <= 1:
+                continue
+
+            message = " ".join(pitch) + "\n"
             a = random.uniform(0, 1)
             if a < 0.8:
                 train_count += 1
@@ -39,7 +50,7 @@ def main(path, label_path):
                 out = "cv_lable.ark"
 
             with open(os.path.join(label_path, out), "a+") as file:
-                file.write(massage)
+                file.write(message)
 
     total = train_count + test_count + cv_count
     print(f"Processed: {total}  Train: {train_count}  Test: {test_count}  CV: {cv_count}")
