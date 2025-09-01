@@ -8,7 +8,7 @@ import re
 import sys
 from dataset_stft_wav import Net_DataSet
 from tqdm import tqdm
-from yolo_wav_stft_2bei import YoloBody
+from yolo_wav_stft import YoloBody
 from formula_all import *
 import time
 import logging
@@ -216,13 +216,3 @@ for t in range(epochs):
 print("Done!")
 
 print("Saved PyTorch Model State to model.pth")
-
-
-
-
-
-
-
-
-
-
