@@ -3,6 +3,7 @@ scipy==1.16.1
 matplotlib==3.10.6
 tqdm==4.67.1
 librosa==0.11.0
+samplerate
 resampy==0.4.3
 mir-eval==0.8.2
 pysptk==1.0.1
