@@ -9,9 +9,9 @@ def main(path, label_path):
     if not os.path.exists(label_path):
         os.makedirs(label_path)
 
-    open(os.path.join(label_path, "train_lable.ark"), "w").close()
-    open(os.path.join(label_path, "test_lable.ark"), "w").close()
-    open(os.path.join(label_path, "cv_lable.ark"), "w").close()
+    open(os.path.join(label_path, "train_label.ark"), "w").close()
+    open(os.path.join(label_path, "test_label.ark"), "w").close()
+    open(os.path.join(label_path, "cv_label.ark"), "w").close()
 
     train_count = test_count = cv_count = 0
     for root, _, files in os.walk(path):
@@ -41,13 +41,13 @@ def main(path, label_path):
             a = random.uniform(0, 1)
             if a < 0.8:
                 train_count += 1
-                out = "train_lable.ark"
+                out = "train_label.ark"
             elif a < 0.93:
                 test_count += 1
-                out = "test_lable.ark"
+                out = "test_label.ark"
             else:
                 cv_count += 1
-                out = "cv_lable.ark"
+                out = "cv_label.ark"
 
             with open(os.path.join(label_path, out), "a+") as file:
                 file.write(message)

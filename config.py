@@ -19,20 +19,20 @@ save_model_path = '/kaggle/working/model_mdb'
 
 data_dict={
 
-    'ptdb_train_path' : '/kaggle/working/SPEECH_DATA/SPEECH DATA/label/hz_class_2/train_lable.ark',
-    'ptdb_validation_path' : '/kaggle/working/SPEECH_DATA/SPEECH DATA/label/hz_class_2/cv_lable.ark',
+    'ptdb_train_path' : '/kaggle/working/SPEECH_DATA/SPEECH DATA/label/hz_class_2/train_label.ark',
+    'ptdb_validation_path' : '/kaggle/working/SPEECH_DATA/SPEECH DATA/label/hz_class_2/cv_label.ark',
     'ptdb_validation_csv_path' : '/kaggle/working/SPEECH_DATA/SPEECH DATA/f0',
-    'ptdb_test_path' : '/kaggle/working/SPEECH_DATA/SPEECH DATA_2/label/hz_class_2/test_lable.ark',
+    'ptdb_test_path' : '/kaggle/working/SPEECH_DATA/SPEECH DATA_2/label/hz_class_2/test_label.ark',
     'ptdb_wav_dir_path' : '/kaggle/working/SPEECH_DATA/SPEECH DATA_2/wav', #??
     'ptdb_hop_size' : 0.01,
     'ptdb_hop_size_dot' : 0.01*16000,
     'ptdb_out_class' : 360,
     'ptdb_sr' : 16000,
 
-    'mir1k_train_path' : '/kaggle/working/MIR-1K/data/label/bin_class/train_lable.ark',
-    'mir1k_validation_path' : '/kaggle/working/MIR-1K/data/label/bin_class/cv_lable.ark',
+    'mir1k_train_path' : '/kaggle/working/MIR-1K/data/label/bin_class/train_label.ark',
+    'mir1k_validation_path' : '/kaggle/working/MIR-1K/data/label/bin_class/cv_label.ark',
     'mir1k_validation_csv_path' : '/kaggle/working/MIR-1K/PitchLabel',
-    'mir1k_test_path' : '/kaggle/working/MIR-1K/data/label/bin_class/test_lable.ark',
+    'mir1k_test_path' : '/kaggle/working/MIR-1K/data/label/bin_class/test_label.ark',
     'mir1k_wav_dir_path' : '/kaggle/working/MIR-1K/Wavfile',
     'mir1k_hop_size' : 0.02,
     'mir1k_hop_size_dot' : 0.02*16000,

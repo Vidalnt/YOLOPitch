@@ -9,9 +9,9 @@ def main(path, label_path):
     if not os.path.exists(label_path):
         os.makedirs(label_path)
 
-    open(os.path.join(label_path, "train_lable.ark"), "w").close()
-    open(os.path.join(label_path, "test_lable.ark"), "w").close()
-    open(os.path.join(label_path, "cv_lable.ark"), "w").close()
+    open(os.path.join(label_path, "train_label.ark"), "w").close()
+    open(os.path.join(label_path, "test_label.ark"), "w").close()
+    open(os.path.join(label_path, "cv_label.ark"), "w").close()
 
     train_count = test_count = cv_count = 0
     for root, _, files in os.walk(path):
@@ -44,11 +44,11 @@ def main(path, label_path):
             line = " ".join([rel] + bins) + "\n"
             r = random.random()
             if r < 0.8:
-                out = "train_lable.ark"; train_count += 1
+                out = "train_label.ark"; train_count += 1
             elif r < 0.93:
-                out = "test_lable.ark"; test_count += 1
+                out = "test_label.ark"; test_count += 1
             else:
-                out = "cv_lable.ark"; cv_count += 1
+                out = "cv_label.ark"; cv_count += 1
 
             with open(os.path.join(label_path, out), "a+") as of:
                 of.write(line)
