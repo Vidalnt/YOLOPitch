@@ -23,15 +23,20 @@ def main(path, label_path):
             bins = []
             with open(os.path.join(root, fn), "r", encoding="utf-8", errors="ignore") as f:
                 for line in f:
-                    parts = line.strip().split()
-                    if len(parts) < 2:
+                    line = line.strip()
+                    if not line:
                         continue
+                    parts = line.split()  
                     try:
-                        hz = float(parts[1])
+                        v = float(parts[0])
                     except:
                         continue
-                    binv = Convert.convert_hz_to_bin(hz) if hz >= 10 else 0
-                    bins.append(str(round(binv)))
+                    if v == 0:
+                        bins.append("0")
+                    else:
+                        hz = Convert.convert_semitone_to_hz(v)
+                        binv = Convert.convert_hz_to_bin(hz) if hz >= 10 else 0
+                        bins.append(str(int(round(binv))))
 
             if not bins:
                 continue
