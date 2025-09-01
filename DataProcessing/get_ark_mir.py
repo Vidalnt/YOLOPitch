@@ -16,18 +16,18 @@ def main(path, label_path):
     train_count = test_count = cv_count = 0
     for root, _, files in os.walk(path):
         for fn in files:
-            if not fn.lower().endswith(".csv"):
+            if not fn.lower().endswith(".pv"):
                 continue
 
             rel = os.path.relpath(os.path.join(root, fn), start=path).replace("\\", "/")
             bins = []
             with open(os.path.join(root, fn), "r", encoding="utf-8", errors="ignore") as f:
                 for line in f:
-                    parts = line.strip().split(",")
+                    parts = line.strip().split()
                     if len(parts) < 2:
                         continue
                     try:
-                        hz = float(parts[1].strip())
+                        hz = float(parts[1])
                     except:
                         continue
                     binv = Convert.convert_hz_to_bin(hz) if hz >= 10 else 0
