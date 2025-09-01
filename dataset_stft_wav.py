@@ -25,7 +25,11 @@ def get_frames(abs_wav_path,model_srate=16000,step_size= 0.02,len_frame_time=0.0
     frames = frames.transpose().copy()
     #z-score归一化
     frames -= np.mean(frames, axis=1)[:, np.newaxis]
-    frames /= np.std(frames, axis=1)[:, np.newaxis]
+    std = np.std(frames, axis=1)
+    
+    std[std == 0] = 1e-8
+    frames /= std[:, np.newaxis]
+    
     frames[np.isnan(frames)] = 0
     ret = librosa.resample(y=frames, res_type='linear', orig_sr=sample_rate, target_sr=model_srate)
     return ret
