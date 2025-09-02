@@ -187,17 +187,41 @@ def validation(dataloader, model, loss_fn, csv_path=validation_csv_path):
     log.info(f"sound_score_avg: {sound_score_avg}")
     log.info(f"music_score_avg: {music_score_avg}")
 
+    return voice_accuracy
+
 epochs = config.epochs
-save_model_path = 'save_model_path'
-if not os.path.exists(save_model_path):
-    os.makedirs(save_model_path)
+if not os.path.exists(config.save_model_path):
+    os.makedirs(config.save_model_path)
+
+best_voice_accuracy = 0.0
 
 for t in range(epochs):
     print(f"Epoch {t+1}\n-------------------------------")
     log.info(f"Epoch {t+1}\n-------------------------------")
+    
     train(train_dataloader, model, loss_fn, optimizer, scaler)
-    validation(validation_dataloader, model, loss_fn)
+    
+    current_accuracy = validation(validation_dataloader, model, loss_fn)
     log.info(f"\n\n")
+    
     validation(test_dataloader, model, loss_fn, csv_path=config.test_csv_path)
+
+    if config.save_interval > 0 and (t + 1) % config.save_interval == 0:
+        save_path = os.path.join(save_model_path, f"yolopitch_{t+1}_epochs.pth")
+        torch.save(model.state_dict(), save_path)
+        print(f"Saved checkpoint to {save_path}")
+        log.info(f"Saved checkpoint to {save_path}")
+
+    if current_accuracy > best_voice_accuracy:
+        best_voice_accuracy = current_accuracy
+        best_path = os.path.join(save_model_path, "yolopitch_best.pth")
+        torch.save(model.state_dict(), best_path)
+        print(f"New best model saved to {best_path} with Voice Accuracy: {best_voice_accuracy:.4f}")
+        log.info(f"New best model saved to {best_path} with Voice Accuracy: {best_voice_accuracy:.4f}")
+
+final_path = os.path.join(save_model_path, f"yolopitch_{epochs}_epochs_final.pth")
+torch.save(model.state_dict(), final_path)
+print(f"Saved final model to {final_path}")
+log.info(f"Saved final model to {final_path}")
 
 print("Done!")

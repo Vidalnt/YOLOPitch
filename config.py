@@ -15,7 +15,8 @@ notice=''
 data_name = 'ptdb'  #choose: mdb,ptdb,ikala,mir1k,mdb_zi,mdb_song
 
 epochs=100
-save_model_path = '/kaggle/working/model_mdb'
+save_interval = 2
+save_model_path = '/kaggle/working/model'
 precomputed_path = '/kaggle/tmp'
 data_dict={
 
