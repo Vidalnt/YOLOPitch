@@ -5,6 +5,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import numpy as np
 from dataset_stft_wav import get_frames, get_stft
 import config
+from tqdm import tqdm
 
 def precompute_features():
     os.makedirs(config.precomputed_path, exist_ok=True)
@@ -13,11 +14,12 @@ def precompute_features():
     for root, _, files in os.walk(config.wav_dir_path):
         for file in files:
             if file.endswith(".wav"):
-                audio_files.append(os.path.join(root, file))
+                audio_path = os.path.join(root, file)
+                if config.data_name == 'ptdb' and os.path.sep + 'LAR' + os.path.sep in audio_path:
+                    continue
+                audio_files.append(audio_path)
     
-    for audio_path in audio_files:
-        print(f"Processing: {audio_path}")
-        
+    for audio_path in tqdm(audio_files, desc="Precomputing features"):
         frames = get_frames(audio_path, step_size=config.hop_size)
         stft = get_stft(audio_path, step_size=config.hop_size).T
         
