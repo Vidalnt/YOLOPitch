@@ -22,7 +22,7 @@ data_dict={
 
     'ptdb_train_path' : '/kaggle/working/SPEECH_DATA/SPEECH DATA/label/hz_class_2/train_label.ark',
     'ptdb_validation_path' : '/kaggle/working/SPEECH_DATA/SPEECH DATA/label/hz_class_2/cv_label.ark',
-    'ptdb_validation_csv_path' : '/kaggle/working/SPEECH_DATA/SPEECH DATA/f0',
+    'ptdb_validation_csv_path' : '/kaggle/working/SPEECH_DATA/SPEECH DATA/',
     'ptdb_test_path' : '/kaggle/working/SPEECH_DATA/SPEECH DATA/label/hz_class_2/test_label.ark',
     'ptdb_wav_dir_path' : '/kaggle/working/SPEECH_DATA/SPEECH DATA',
     'ptdb_hop_size' : 0.01,
