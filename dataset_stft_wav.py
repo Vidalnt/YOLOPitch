@@ -73,7 +73,7 @@ class Net_DataSet(Dataset):
             
         if config.data_name == "ptdb":
             f0_rel_path = parts[0]
-            audio_rel_path = f0_rel_path.replace("REF", "MIC").replace(".f0", ".wav")
+            audio_rel_path = f0_rel_path.replace("REF", "MIC").replace("ref", "mic").replace(".f0", ".wav")
             wav_path = os.path.join(config.wav_dir_path, audio_rel_path)
             pv_name = f0_rel_path
             label = parts[1:]
