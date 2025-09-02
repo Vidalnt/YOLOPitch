@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
-from torch.cuda.amp import autocast, GradScaler
+from torch.amp import autocast, GradScaler
 import numpy as np
 import librosa
 import os
@@ -39,7 +39,7 @@ else:
     print("Training configured for Float32 (fp32).")
 
 use_scaler = (precision == "fp16") and (device == "cuda")
-scaler = GradScaler(enabled=use_scaler)
+scaler = GradScaler(device=device, enabled=use_scaler)
 
 validation_csv_path = config.validation_csv_path
 train_data = Net_DataSet(config.train_path)
@@ -92,7 +92,7 @@ def train(dataloader, model, loss_fn, optimizer, scaler):
         
         optimizer.zero_grad()
 
-        with autocast(device_type=device, dtype=train_dtype, enabled=use_amp):
+        with autocast(device, dtype=train_dtype, enabled=use_amp):
             pred = model(X_wav, X_stft)
             min_num = min(y.shape[0], pred.shape[0])
             pred = pred[:min_num, :]
@@ -121,7 +121,7 @@ def validation(dataloader, model, loss_fn, csv_path=validation_csv_path):
             y = Y[0].type(torch.LongTensor)
             X_wav, X_stft, y = X[0].to(device), X[1].to(device), y.to(device).squeeze(0)
 
-            with autocast(device_type=device, dtype=train_dtype, enabled=use_amp):
+            with autocast(device, dtype=train_dtype, enabled=use_amp):
                 pred = model(X_wav, X_stft)
 
             min_num = min(y.shape[0], pred.shape[0])
