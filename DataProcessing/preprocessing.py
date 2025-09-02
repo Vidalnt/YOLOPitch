@@ -1,9 +1,10 @@
 import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import numpy as np
 from dataset_stft_wav import get_frames, get_stft
 import config
-import sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def precompute_features():
     os.makedirs(config.precomputed_path, exist_ok=True)
