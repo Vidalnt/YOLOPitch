@@ -23,9 +23,9 @@ train_data = Net_DataSet(config.train_path)
 validation_data = Net_DataSet(config.validation_path)
 test_data = Net_DataSet(config.test_path)
 batch_size = 1
-train_dataloader = DataLoader(train_data, batch_size=batch_size, num_workers=os.cpu_count())
-validation_dataloader = DataLoader(validation_data, batch_size=batch_size, num_workers=os.cpu_count())
-test_dataloader = DataLoader(test_data, batch_size=batch_size, num_workers=os.cpu_count())
+train_dataloader = DataLoader(train_data, batch_size=batch_size, num_workers=4, shuffle=True, pin_memory=True, persistent_workers=True)
+validation_dataloader = DataLoader(validation_data, batch_size=batch_size, num_workers=4, pin_memory=True, persistent_workers=True)
+test_dataloader = DataLoader(test_data, batch_size=batch_size, num_workers=4, pin_memory=True, persistent_workers=True)
 
 
 resume_path = ""
