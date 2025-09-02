@@ -328,7 +328,6 @@ class YoloBody(nn.Module):
         #------------------------Feature Enhancement Network------------------------# 
         # Use the fused and aligned features in the rest of the network
         # 20, 20, 1024 => 20, 20, 512
-        # 20, 20, 1024 => 20, 20, 512
         P5          = self.sppcspc(fused_feat3)  #(1,128,32,3)
         # 20, 20, 512 => 20, 20, 256
         P5_conv     = self.conv_for_P5(P5) #(1,64,32,3)
