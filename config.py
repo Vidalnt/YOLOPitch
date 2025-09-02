@@ -12,18 +12,18 @@ import os
 
 notice=''
 
-data_name = 'mdb'  #choose: mdb,ptdb,ikala,mir1k,mdb_zi,mdb_song
+data_name = 'ptdb'  #choose: mdb,ptdb,ikala,mir1k,mdb_zi,mdb_song
 
 epochs=100
 save_model_path = '/kaggle/working/model_mdb'
-
+precomputed_path = '/kaggle/tmp'
 data_dict={
 
     'ptdb_train_path' : '/kaggle/working/SPEECH_DATA/SPEECH DATA/label/hz_class_2/train_label.ark',
     'ptdb_validation_path' : '/kaggle/working/SPEECH_DATA/SPEECH DATA/label/hz_class_2/cv_label.ark',
     'ptdb_validation_csv_path' : '/kaggle/working/SPEECH_DATA/SPEECH DATA/f0',
     'ptdb_test_path' : '/kaggle/working/SPEECH_DATA/SPEECH DATA_2/label/hz_class_2/test_label.ark',
-    'ptdb_wav_dir_path' : '/kaggle/working/SPEECH_DATA/SPEECH DATA_2/wav', #??
+    'ptdb_wav_dir_path' : '/kaggle/working/SPEECH_DATA/SPEECH DATA',
     'ptdb_hop_size' : 0.01,
     'ptdb_hop_size_dot' : 0.01*16000,
     'ptdb_out_class' : 360,
