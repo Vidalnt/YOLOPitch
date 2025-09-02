@@ -298,16 +298,44 @@ class YoloBody(nn.Module):
         x_wav = x_wav.unsqueeze(0)
         feat1, feat2, feat3 = self.backbone.forward(x_stft)
         feat1_2, feat2_2, feat3_2 = self.backbone2.forward(x_wav)
+
+        # ----------------------------------------------------------------------
+        # START OF THE FIX: Precise Feature Alignment
+        # The outputs of the WAV backbone (which are longer) are resized
+        # to exactly match the outputs of the STFT backbone.
+        # ----------------------------------------------------------------------
         
-        #------------------------加强特征提取网络------------------------# 
+        # Get the spatial dimensions of the reference tensors (from the STFT)
+        target_size_feat1 = feat1.shape[2:]
+        target_size_feat2 = feat2.shape[2:]
+        target_size_feat3 = feat3.shape[2:]
+        
+        # Create adaptive pooling layers for alignment
+        align_feat1 = nn.AdaptiveAvgPool2d(target_size_feat1)
+        align_feat2 = nn.AdaptiveAvgPool2d(target_size_feat2)
+        align_feat3 = nn.AdaptiveAvgPool2d(target_size_feat3)
+        
+        # Apply the alignment
+        feat1_2_aligned = align_feat1(feat1_2)
+        feat2_2_aligned = align_feat2(feat2_2)
+        feat3_2_aligned = align_feat3(feat3_2)
+        
+        # Now, fuse the aligned features by adding them
+        fused_feat1 = feat1 + feat1_2_aligned
+        fused_feat2 = feat2 + feat2_2_aligned
+        fused_feat3 = feat3 + feat3_2_aligned
+        
+        #------------------------Feature Enhancement Network------------------------# 
+        # Use the fused and aligned features in the rest of the network
         # 20, 20, 1024 => 20, 20, 512
-        P5          = self.sppcspc(feat3+feat3_2)  #(1,128,32,3)
+        # 20, 20, 1024 => 20, 20, 512
+        P5          = self.sppcspc(fused_feat3)  #(1,128,32,3)
         # 20, 20, 512 => 20, 20, 256
         P5_conv     = self.conv_for_P5(P5) #(1,64,32,3)
         # 20, 20, 256 => 40, 40, 256
         P5_upsample = self.upsample(P5_conv)  #(1,64,64,3)
         # 40, 40, 256 cat 40, 40, 256 => 40, 40, 512
-        P4          = torch.cat([self.conv_for_feat2(feat2+feat2_2), P5_upsample], 1)  
+        P4          = torch.cat([self.conv_for_feat2(fused_feat2), P5_upsample], 1)  
         # 40, 40, 512 => 40, 40, 256
         P4          = self.conv3_for_upsample1(P4) #(1,64,64,3)
 
@@ -316,7 +344,7 @@ class YoloBody(nn.Module):
         # 40, 40, 128 => 80, 80, 128
         P4_upsample = self.upsample(P4_conv)  #(1,32,128,3)
         # 80, 80, 128 cat 80, 80, 128 => 80, 80, 256
-        P3          = torch.cat([self.conv_for_feat1(feat1+feat1_2), P4_upsample], 1)  
+        P3          = torch.cat([self.conv_for_feat1(fused_feat1), P4_upsample], 1)  
         # 80, 80, 256 => 80, 80, 128
         P3          = self.conv3_for_upsample2(P3)  ##(1,32,128,3)
 
