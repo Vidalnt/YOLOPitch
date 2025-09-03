@@ -25,10 +25,10 @@ def main(path, label_path):
             with open(os.path.join(root, f0), "r", encoding="utf-8", errors="ignore") as file:
                 for line in file:
                     parts = line.strip().split()
-                    if len(parts) < 2:
+                    if len(parts) < 3:
                         continue
                     try:
-                        hz = float(parts[1])
+                        hz = float(parts[2])
                     except:
                         continue
                     bin_val = Convert.convert_hz_to_bin(hz) if hz >= 10 else 0
