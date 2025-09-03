@@ -226,7 +226,7 @@ def fuse_conv_and_bn(conv, bn):
 #   yolo_body
 #---------------------------------------------------#
 class YoloBody(nn.Module):
-    def __init__(self, phi, num_classes=551, pretrained=False):
+    def __init__(self, phi, num_classes=550, pretrained=False):
         super(YoloBody, self).__init__()
 
         #-----------------------------------------------#
