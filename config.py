@@ -67,7 +67,7 @@ data_sr = data_name+'_sr'
 train_path = data_dict[data_train_path]         # train_label_ark_path
 validation_path = data_dict[data_validation_path]       # validation_label_ark_path
 validation_csv_path = data_dict[data_validation_csv_path]       # ground_truth_path
-test_csv_path = data_dict[data_test_path]       # test_label_ark_path
+test_path = data_dict[data_test_path]       # test_label_ark_path
 wav_dir_path = data_dict[data_wav_dir_path]       # wav_dir_path
 hop_size = data_dict[data_hop_size]       # hop_size, such as 10 ms
 hop_size_dot = data_dict[data_hop_size_dot]       # hop_size_dot, such as 10ms * 16000 (sr) = 160
