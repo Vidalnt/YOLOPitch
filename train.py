@@ -52,10 +52,14 @@ test_dataloader = DataLoader(test_data, batch_size=batch_size, num_workers=4, pi
 
 resume_path = ""
 model = YoloBody(phi='l', num_classes=config.out_class, pretrained=False).to(device)
-if resume_path:
-    model.load_state_dict(torch.load(resume_path))
-print(model)
-loss_fn = nn.CrossEntropyLoss()
+#if resume_path:
+#    model.load_state_dict(torch.load(resume_path))
+#print(model)
+weights = torch.ones(config.out_class)
+weights[0] = 0.1 
+weights = weights.to(device)
+
+loss_fn = nn.CrossEntropyLoss(weight=weights)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.0002, betas=(0.9, 0.999))
 
 def get_label(path):
