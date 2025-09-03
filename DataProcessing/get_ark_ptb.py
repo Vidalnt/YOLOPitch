@@ -33,9 +33,10 @@ def main(path, label_path):
                         continue
                     try:
                         hz = float(parts[0])
+                        is_voiced = float(parts[1])
                     except:
                         continue
-                    bin_val = Convert.convert_hz_to_bin(hz) if hz >= 10 else 0
+                    bin_val = 0 if is_voiced == 0.0 else Convert.convert_hz_to_bin(hz)
                     pitch.append(str(round(bin_val)))
 
             if len(pitch) <= 1:
