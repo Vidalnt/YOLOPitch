@@ -281,6 +281,9 @@ class Sound():
         if np.sum(ref_indicator) == 0:
             return 1
 
+        if N_vv == 0:
+            return 0.0
+
         return N_F0E / N_vv
 
     #每帧数据集品错误率FFE：
@@ -303,7 +306,10 @@ class Sound():
         est_indicator = (est_voicing > 0).astype(float)
         if np.sum(ref_indicator) == 0:
             return 1
-        return np.sum(est_indicator * ref_indicator) / np.sum(est_indicator)
+        div_ = np.sum(est_indicator)
+        if div_ == 0:
+            return 0.0 
+        return np.sum(est_indicator * ref_indicator) / div_
 
     #语音召回率VR：（预测正确的）浊音帧数/（（预测正确的）浊音帧数 + （预测错误的）清音帧帧数）-->真实的所有浊音帧数      
     # （预测正确）浊音帧数/真实总浊音帧数
@@ -321,8 +327,12 @@ class Sound():
             return 0.
         VP = Sound.voice_precision(ref_voicing, est_voicing)
         VR = Sound.voice_recall(ref_voicing, est_voicing)
+
+        div_ = VP + VR
+        if div_ == 0:
+            return 0.0
         
-        return (2 * VP * VR) / (VP + VR)
+        return (2 * VP * VR) / div_
 
     def all_mir_eval(ref_voicing, est_voicing,threshold = 0.2):
         VDE = Sound.voicing_decision_error(ref_voicing, est_voicing)
