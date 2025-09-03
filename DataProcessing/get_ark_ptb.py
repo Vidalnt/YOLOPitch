@@ -28,7 +28,7 @@ def main(path, label_path):
                     if len(parts) < 3:
                         continue
                     try:
-                        hz = float(parts[2])
+                        hz = float(parts[0])
                     except:
                         continue
                     bin_val = Convert.convert_hz_to_bin(hz) if hz >= 10 else 0
