@@ -60,6 +60,9 @@ weights[0] = 0.1
 weights = weights.to(device)
 
 loss_fn = nn.CrossEntropyLoss(weight=weights)
+# loss_fn = nn.NLLLoss(reduction='sum')
+# optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
+# optimizer = torch.optim.Adagrad(model.parameters(), lr=1e-3)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.0002, betas=(0.9, 0.999))
 
 def get_label(path):
