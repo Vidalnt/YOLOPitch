@@ -204,7 +204,7 @@ for t in range(epochs):
     current_accuracy = validation(validation_dataloader, model, loss_fn)
     log.info(f"\n\n")
     
-    validation(test_dataloader, model, loss_fn, csv_path=config.test_path)
+    validation(test_dataloader, model, loss_fn)
 
     if config.save_interval > 0 and (t + 1) % config.save_interval == 0:
         save_path = os.path.join(save_model_path, f"yolopitch_{t+1}_epochs.pth")
