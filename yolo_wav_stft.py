@@ -226,7 +226,7 @@ def fuse_conv_and_bn(conv, bn):
 #   yolo_body
 #---------------------------------------------------#
 class YoloBody(nn.Module):
-    def __init__(self, phi, pretrained=False):
+    def __init__(self, phi, num_classes=551, pretrained=False):
         super(YoloBody, self).__init__()
 
         #-----------------------------------------------#
@@ -289,7 +289,7 @@ class YoloBody(nn.Module):
             nn.ReLU()
         )
         
-        self.fc2 = nn.Linear(256,550)
+        self.fc2 = nn.Linear(256,num_classes)
 
     
     def forward(self,x_wav,x_stft):

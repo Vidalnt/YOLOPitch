@@ -51,7 +51,7 @@ validation_dataloader = DataLoader(validation_data, batch_size=batch_size, num_w
 test_dataloader = DataLoader(test_data, batch_size=batch_size, num_workers=4, pin_memory=True, persistent_workers=True)
 
 resume_path = ""
-model = YoloBody(phi='l', pretrained=False).to(device)
+model = YoloBody(phi='l', num_classes=config.out_class, pretrained=False).to(device)
 if resume_path:
     model.load_state_dict(torch.load(resume_path))
 print(model)

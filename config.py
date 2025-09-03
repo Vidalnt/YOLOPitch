@@ -27,7 +27,7 @@ data_dict={
     'ptdb_wav_dir_path' : '/kaggle/working/SPEECH_DATA/SPEECH DATA',
     'ptdb_hop_size' : 0.01,
     'ptdb_hop_size_dot' : 0.01*16000,
-    'ptdb_out_class' : 360,
+    'ptdb_out_class' : 550+1,
     'ptdb_sr' : 16000,
 
     'mir1k_train_path' : '/kaggle/working/MIR-1K/data/label/bin_class/train_label.ark',
@@ -37,7 +37,7 @@ data_dict={
     'mir1k_wav_dir_path' : '/kaggle/working/MIR-1K/Wavfile',
     'mir1k_hop_size' : 0.02,
     'mir1k_hop_size_dot' : 0.02*16000,
-    'mir1k_out_class' : 360,
+    'mir1k_out_class' : 360+1,
     'mir1k_sr' : 16000,
 
 
@@ -48,7 +48,7 @@ data_dict={
     'mdb_wav_dir_path' : '/kaggle/working/MDB-stem-synth/audio_stems', 
     'mdb_hop_size' : 128/44100*3,
     'mdb_hop_size_dot' : 128*3,
-    'mdb_out_class' : 360,
+    'mdb_out_class' : 360+1,
     'mdb_sr' : 44100,
 
     
