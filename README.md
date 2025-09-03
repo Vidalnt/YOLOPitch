@@ -37,3 +37,7 @@ Given the uncertainty around the proper implementation strategy for handling cla
 ## References
 
 Xufei Li, Hao Huang, Ying Hu, Liang He, Jiabao Zhang, Yuyi Wang. [YOLOPitch: A Time-Frequency Dual-Branch YOLO Model for Pitch Estimation](https://www.isca-archive.org/interspeech_2024/li24ja_interspeech.pdf). INTERSPEECH 2024.
+
+License 
+
+This implementation is licensed under the MIT License. 
