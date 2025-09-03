@@ -25,6 +25,10 @@ def main(path, label_path):
             with open(os.path.join(root, f0), "r", encoding="utf-8", errors="ignore") as file:
                 for line in file:
                     parts = line.strip().split()
+                    # parts[0] = estimated fundamental frequency (Hz)
+                    # parts[1] = voicing decision (0 = unvoiced, 1 = voiced)
+                    # parts[2] = local RMS energy of the signal
+                    # parts[3] = normalized peak autocorrelation value
                     if len(parts) < 3:
                         continue
                     try:
