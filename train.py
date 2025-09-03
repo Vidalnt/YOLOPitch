@@ -207,19 +207,19 @@ for t in range(epochs):
     validation(test_dataloader, model, loss_fn)
 
     if config.save_interval > 0 and (t + 1) % config.save_interval == 0:
-        save_path = os.path.join(save_model_path, f"yolopitch_{t+1}_epochs.pth")
+        save_path = os.path.join(config.save_model_path, f"yolopitch_{t+1}_epochs.pth")
         torch.save(model.state_dict(), save_path)
         print(f"Saved checkpoint to {save_path}")
         log.info(f"Saved checkpoint to {save_path}")
 
     if current_accuracy > best_voice_accuracy:
         best_voice_accuracy = current_accuracy
-        best_path = os.path.join(save_model_path, "yolopitch_best.pth")
+        best_path = os.path.join(config.save_model_path, "yolopitch_best.pth")
         torch.save(model.state_dict(), best_path)
         print(f"New best model saved to {best_path} with Voice Accuracy: {best_voice_accuracy:.4f}")
         log.info(f"New best model saved to {best_path} with Voice Accuracy: {best_voice_accuracy:.4f}")
 
-final_path = os.path.join(save_model_path, f"yolopitch_{epochs}_epochs_final.pth")
+final_path = os.path.join(config.save_model_path, f"yolopitch_{epochs}_epochs_final.pth")
 torch.save(model.state_dict(), final_path)
 print(f"Saved final model to {final_path}")
 log.info(f"Saved final model to {final_path}")
