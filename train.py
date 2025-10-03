@@ -55,18 +55,8 @@ model = YoloBody(phi='l', num_classes=config.out_class, pretrained=False).to(dev
 #if resume_path:
 #    model.load_state_dict(torch.load(resume_path))
 #print(model)
-all_labels = []
-for _, (y_batch, _) in tqdm(train_dataloader, desc="Counting class frequencies"):
-    all_labels.extend(y_batch[0].numpy().flatten())
 
-class_counts = np.bincount(all_labels, minlength=config.out_class)
-
-class_weights = 1.0 / (class_counts + 1e-8)
-class_weights[0] *= 0.1
-
-class_weights_tensor = torch.tensor(class_weights, dtype=train_dtype).to(device)
-
-loss_fn = nn.CrossEntropyLoss(weight=class_weights_tensor)
+loss_fn = nn.CrossEntropyLoss()
 # loss_fn = nn.NLLLoss(reduction='sum')
 # optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
 # optimizer = torch.optim.Adagrad(model.parameters(), lr=1e-3)

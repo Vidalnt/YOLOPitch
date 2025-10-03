@@ -226,146 +226,68 @@ def fuse_conv_and_bn(conv, bn):
 #   yolo_body
 #---------------------------------------------------#
 class YoloBody(nn.Module):
-    def __init__(self, phi, num_classes=550, pretrained=False):
+    def __init__(self, phi, num_classes=551, pretrained=False):
         super(YoloBody, self).__init__()
 
-        #-----------------------------------------------#
-        #   定义了不同yolov7版本的参数
-        #-----------------------------------------------#
-        transition_channels = {'l' : 8, 'x' : 40}[phi]
-        block_channels      = 8
-        panet_channels      = {'l' : 8, 'x' : 64}[phi]
-        e       = {'l' : 2, 'x' : 1}[phi]
-        n       = {'l' : 4, 'x' : 6}[phi]
-        ids     = {'l' : [-1, -2, -3, -4, -5, -6], 'x' : [-1, -3, -5, -7, -8]}[phi]
-        conv    = {'l' : RepConv, 'x' : Conv}[phi]
-        #-----------------------------------------------#
-        #   输入图片是640, 640, 3
-        #-----------------------------------------------#
+        transition_channels = {'l': 8, 'x': 40}[phi]
+        block_channels = 8
+        panet_channels = {'l': 8, 'x': 64}[phi]
+        e = {'l': 2, 'x': 1}[phi]
+        n = {'l': 4, 'x': 6}[phi]
+        ids = {'l': [-1, -2, -3, -4, -5, -6], 'x': [-1, -3, -5, -7, -8]}[phi]
 
-        #---------------------------------------------------#   
-        #   生成主干模型
-        #   获得三个有效特征层，他们的shape分别是：
-        #   80, 80, 512
-        #   40, 40, 1024
-        #   20, 20, 1024
-        #---------------------------------------------------#
-        # self.conv1 = nn.Conv2d(1,3,(1,1),(1,1))
-        self.backbone   = Backbone(transition_channels, block_channels, n, phi, pretrained=pretrained)
-        self.backbone2   = Backbone2(transition_channels, block_channels, n, phi, pretrained=pretrained)
+        self.backbone = Backbone(transition_channels, block_channels, n, phi, pretrained=pretrained)
+        self.backbone2 = Backbone2(transition_channels, block_channels, n, phi, pretrained=pretrained)
 
-        #------------------------加强特征提取网络------------------------# 
-        self.upsample   = nn.Upsample(scale_factor=(2,1), mode="nearest")
-        # self.upsample   = nn.Upsample(scale_factor=2, mode="nearest")
+        self.upsample = nn.Upsample(scale_factor=(2, 1), mode="nearest")
 
-        # 20, 20, 1024 => 20, 20, 512
-        self.sppcspc                = SPPCSPC(transition_channels * 32, transition_channels * 16)
-        # 20, 20, 512 => 20, 20, 256 => 40, 40, 256
-        self.conv_for_P5            = Conv(transition_channels * 16, transition_channels * 8)
-        # 40, 40, 1024 => 40, 40, 256
-        self.conv_for_feat2         = Conv(transition_channels * 32, transition_channels * 8)
-        # 40, 40, 512 => 40, 40, 256
-        self.conv3_for_upsample1    = Multi_Concat_Block(transition_channels * 16, panet_channels * 4, transition_channels * 8, e=e, n=n, ids=ids)
+        self.sppcspc = SPPCSPC(transition_channels * 32, transition_channels * 16)
+        self.conv_for_P5 = Conv(transition_channels * 16, transition_channels * 8)
+        self.conv_for_feat2 = Conv(transition_channels * 32, transition_channels * 8)
+        self.conv3_for_upsample1 = Multi_Concat_Block(transition_channels * 16, panet_channels * 4, transition_channels * 8, e=e, n=n, ids=ids)
 
-        # 40, 40, 256 => 40, 40, 128 => 80, 80, 128
-        self.conv_for_P4            = Conv(transition_channels * 8, transition_channels * 4)
-        # 80, 80, 512 => 80, 80, 128
-        self.conv_for_feat1         = Conv(transition_channels * 16, transition_channels * 4)
-        # 80, 80, 256 => 80, 80, 128
-        self.conv3_for_upsample2    = Multi_Concat_Block(transition_channels * 8, panet_channels * 2, transition_channels * 4, e=e, n=n, ids=ids)
+        self.conv_for_P4 = Conv(transition_channels * 8, transition_channels * 4)
+        self.conv_for_feat1 = Conv(transition_channels * 16, transition_channels * 4)
+        self.conv3_for_upsample2 = Multi_Concat_Block(transition_channels * 8, panet_channels * 2, transition_channels * 4, e=e, n=n, ids=ids)
 
-        # 80, 80, 128 => 40, 40, 256
-        self.down_sample1           = Transition_Block(transition_channels * 4, transition_channels * 4)
-        # 40, 40, 512 => 40, 40, 256
-        self.conv3_for_downsample1  = Multi_Concat_Block(transition_channels * 16, panet_channels * 4, transition_channels * 8, e=e, n=n, ids=ids)
+        self.down_sample1 = Transition_Block(transition_channels * 4, transition_channels * 4)
+        self.conv3_for_downsample1 = Multi_Concat_Block(transition_channels * 16, panet_channels * 4, transition_channels * 8, e=e, n=n, ids=ids)
 
-        # 40, 40, 256 => 20, 20, 512
-        self.down_sample2           = Transition_Block(transition_channels * 8, transition_channels * 8)
-        # 20, 20, 1024 => 20, 20, 512
-        self.conv3_for_downsample2  = Multi_Concat_Block(transition_channels * 32, panet_channels * 8, transition_channels * 16, e=e, n=n, ids=ids)
-        
-        self.fc = nn.Sequential(
-            nn.Conv2d(32,2,1,1),
-            nn.ReLU()
-        )
-        
-        self.fc2 = nn.Linear(256,num_classes)
+        self.down_sample2 = Transition_Block(transition_channels * 8, transition_channels * 8)
+        self.conv3_for_downsample2 = Multi_Concat_Block(transition_channels * 32, panet_channels * 8, transition_channels * 16, e=e, n=n, ids=ids)
 
-    
-    def forward(self,x_wav,x_stft):
-        #  backbone
-        x_stft = x_stft.unsqueeze(0)
-        x_wav = x_wav.unsqueeze(0)
-        feat1, feat2, feat3 = self.backbone.forward(x_stft)
-        feat1_2, feat2_2, feat3_2 = self.backbone2.forward(x_wav)
+        # Correct head
+        self.head = nn.Conv2d(transition_channels * 16, num_classes, kernel_size=1)
 
-        # ----------------------------------------------------------------------
-        # START OF THE FIX: Precise Feature Alignment
-        # The outputs of the WAV backbone (which are longer) are resized
-        # to exactly match the outputs of the STFT backbone.
-        # ----------------------------------------------------------------------
-        
-        # Get the spatial dimensions of the reference tensors (from the STFT)
-        target_size_feat1 = feat1.shape[2:]
-        target_size_feat2 = feat2.shape[2:]
-        target_size_feat3 = feat3.shape[2:]
-        
-        # Create adaptive pooling layers for alignment
-        align_feat1 = nn.AdaptiveAvgPool2d(target_size_feat1)
-        align_feat2 = nn.AdaptiveAvgPool2d(target_size_feat2)
-        align_feat3 = nn.AdaptiveAvgPool2d(target_size_feat3)
-        
-        # Apply the alignment
-        feat1_2_aligned = align_feat1(feat1_2)
-        feat2_2_aligned = align_feat2(feat2_2)
-        feat3_2_aligned = align_feat3(feat3_2)
-        
-        # Now, fuse the aligned features by adding them
-        fused_feat1 = feat1 + feat1_2_aligned
-        fused_feat2 = feat2 + feat2_2_aligned
-        fused_feat3 = feat3 + feat3_2_aligned
-        
-        #------------------------Feature Enhancement Network------------------------# 
-        # Use the fused and aligned features in the rest of the network
-        # 20, 20, 1024 => 20, 20, 512
-        P5          = self.sppcspc(fused_feat3)  #(1,128,32,3)
-        # 20, 20, 512 => 20, 20, 256
-        P5_conv     = self.conv_for_P5(P5) #(1,64,32,3)
-        # 20, 20, 256 => 40, 40, 256
-        P5_upsample = self.upsample(P5_conv)  #(1,64,64,3)
-        # 40, 40, 256 cat 40, 40, 256 => 40, 40, 512
-        P4          = torch.cat([self.conv_for_feat2(fused_feat2), P5_upsample], 1)  
-        # 40, 40, 512 => 40, 40, 256
-        P4          = self.conv3_for_upsample1(P4) #(1,64,64,3)
+    def forward(self, x_wav, x_stft):
+        # Correct input format
+        x_wav = x_wav.unsqueeze(1).unsqueeze(-1)   # (B, T) → (B, 1, T, 1)
+        x_stft = x_stft.unsqueeze(1)               # (B, T, F) → (B, 1, T, F)
 
-        # 40, 40, 256 => 40, 40, 128
-        P4_conv     = self.conv_for_P4(P4) #(1,32,64,3)
-        # 40, 40, 128 => 80, 80, 128
-        P4_upsample = self.upsample(P4_conv)  #(1,32,128,3)
-        # 80, 80, 128 cat 80, 80, 128 => 80, 80, 256
-        P3          = torch.cat([self.conv_for_feat1(fused_feat1), P4_upsample], 1)  
-        # 80, 80, 256 => 80, 80, 128
-        P3          = self.conv3_for_upsample2(P3)  ##(1,32,128,3)
+        feat1, feat2, feat3 = self.backbone(x_stft)
+        feat1_2, feat2_2, feat3_2 = self.backbone2(x_wav)
 
-        # 80, 80, 128 => 40, 40, 256
-        P3_downsample = self.down_sample1(P3) #(1,64,64,3)
-        # 40, 40, 256 cat 40, 40, 256 => 40, 40, 512
-        P4 = torch.cat([P3_downsample, P4], 1)  #(1,128,64,3)
-        # 40, 40, 512 => 40, 40, 256
-        P4 = self.conv3_for_downsample1(P4)  #(1,128,64,3)--(1,64,64,3)
+        fused1 = feat1 + feat1_2
+        fused2 = feat2 + feat2_2
+        fused3 = feat3 + feat3_2
 
-        # 40, 40, 256 => 20, 20, 512
-        P4_downsample = self.down_sample2(P4)  #-->(1,128,32,3)
-        # 20, 20, 512 cat 20, 20, 512 => 20, 20, 1024
-        P5 = torch.cat([P4_downsample, P5], 1)  #-->(1,256,32,3)
-        # 20, 20, 1024 => 20, 20, 512
-        P5 = self.conv3_for_downsample2(P5)  #-->(1,128,64,3)
+        P5 = self.sppcspc(fused3)
+        P5_up = self.upsample(self.conv_for_P5(P5))
+        P4 = self.conv3_for_upsample1(torch.cat([self.conv_for_feat2(fused2), P5_up], 1))
 
-        fx = self.fc(P5.transpose(1,2))
-        fx = self.fc2(fx.view(256,-1).transpose(0,1))
+        P4_up = self.upsample(self.conv_for_P4(P4))
+        P3 = self.conv3_for_upsample2(torch.cat([self.conv_for_feat1(fused1), P4_up], 1))
 
-        return fx
-    
+        P3_down = self.down_sample1(P3)
+        P4 = self.conv3_for_downsample1(torch.cat([P3_down, P4], 1))
+
+        P4_down = self.down_sample2(P4)
+        P5 = self.conv3_for_downsample2(torch.cat([P4_down, P5], 1))
+
+        # Output by frame
+        logits = self.head(P5)           # (B, num_classes, T, F')
+        logits = logits.mean(dim=-1)     # (B, num_classes, T)
+        return logits.permute(0, 2, 1)   # (B, T, num_classes)
 
 if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -386,4 +308,3 @@ if __name__ == '__main__':
     # print(b[0].shape)
     # print(b[1].shape)
     # print(b[2].shape)
-
