@@ -13,19 +13,22 @@ def get_frames(abs_wav_path, model_srate=16000, step_size=0.02, len_frame_time=0
         sample_rate, audio = wavfile.read(abs_wav_path)
         audio = audio.astype(np.float32)
         
+        if audio.ndim > 1:
+            audio = audio.mean(axis=1)
+        
         hop_length = int(sample_rate * step_size)  
         wlen = int(sample_rate * len_frame_time)
         
         if sample_rate != model_srate:
             audio = librosa.resample(audio, orig_sr=sample_rate, target_sr=model_srate)
             sample_rate = model_srate
+            hop_length = int(sample_rate * step_size)
             wlen = int(sample_rate * len_frame_time)
 
         n_frames = 1 + int((len(audio) - wlen) / hop_length)
         
         if n_frames <= 0:
             return np.zeros((1, wlen), dtype=np.float32)
-            
         
         total_len_needed = wlen + (n_frames - 1) * hop_length
         if len(audio) > total_len_needed:
@@ -35,6 +38,7 @@ def get_frames(abs_wav_path, model_srate=16000, step_size=0.02, len_frame_time=0
 
         frames = as_strided(audio, shape=(wlen, n_frames),
                             strides=(audio.itemsize, hop_length * audio.itemsize))
+        frames = frames.T.copy()
         
         frames -= np.mean(frames, axis=1)[:, np.newaxis]
         std = np.std(frames, axis=1)
@@ -60,6 +64,8 @@ def get_stft(abs_wav_path, model_srate=16000, step_size=0.02, n_fft=2047, len_fr
         total_len_needed = wlen + (n_frames - 1) * hop_length
         if len(y) > total_len_needed:
             y = y[:total_len_needed]
+        elif len(y) < total_len_needed:
+            y = np.pad(y, (0, total_len_needed - len(y)), mode='constant')
 
         stft = librosa.stft(y, n_fft=n_fft,
                            hop_length=hop_length,
@@ -158,4 +164,4 @@ if __name__ == "__main__":
     print("s[6]:", s[6])
     print("frames shape:", s[6][0][0].shape)
     print("stft shape:", s[6][0][1].shape)
-    print("label length:", len(s[6][1][0]))```
+    print("label length:", len(s[6][1][0]))
