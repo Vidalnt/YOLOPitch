@@ -108,7 +108,11 @@ class Net_DataSet(Dataset):
             frames = get_frames(wav_path, step_size=config.hop_size)
             stft = get_stft(wav_path, step_size=config.hop_size).T
         
-        label = label[:len(frames)]
+        min_len = min(len(frames), len(stft))
+        frames = frames[:min_len]
+        stft = stft[:min_len]
+        label = label[:min_len]
+        
         label1 = []
         for x in label:
             try:
@@ -117,10 +121,7 @@ class Net_DataSet(Dataset):
             except:
                 label1.append(0)
         
-        min_len = min(len(label1), len(frames))
         label1 = label1[:min_len]
-        frames = frames[:min_len]
-        stft = stft[:min_len]
         
         label1 = torch.tensor(label1).squeeze().long()
         frames = torch.tensor(frames).float().transpose(0, 1)
