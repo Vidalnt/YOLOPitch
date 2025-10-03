@@ -39,6 +39,7 @@ def get_frames_and_stft_from_audio(audio, model_srate=16000, step_size=0.02, len
         frames = as_strided(audio_proc, shape=(wlen, n_frames),
                             strides=(audio_proc.itemsize, hop_length * audio_proc.itemsize))
         frames = frames.T.copy()
+
         frames -= np.mean(frames, axis=1)[:, np.newaxis]
         std = np.std(frames, axis=1)
         std[std == 0] = 1e-8
@@ -54,15 +55,22 @@ def get_frames_and_stft_from_audio(audio, model_srate=16000, step_size=0.02, len
         log_stft = librosa.amplitude_to_db(np.abs(stft), ref=np.max)
         log_stft = log_stft.T
 
-        assert frames.shape[0] == log_stft.shape[0], f"T mismatch: frames {frames.shape[0]}, stft {log_stft.shape[0]}"
+        T_frames = frames.shape[0]
+        T_stft = log_stft.shape[0]
+        T_min = min(T_frames, T_stft)
+
+        frames = frames[:T_min]
+        log_stft = log_stft[:T_min]
 
         return frames.astype(np.float32), log_stft.astype(np.float32)
+
     except Exception as e:
         print(f"Error in get_frames_and_stft_from_audio: {e}")
         L = int(model_srate * len_frame_time)
         F = n_fft // 2 + 1
         T = 1
         return np.zeros((T, L), dtype=np.float32), np.zeros((T, F), dtype=np.float32)
+
 
 class Net_DataSet(Dataset):
     def __init__(self, path):
