@@ -38,13 +38,24 @@ def get_frames(abs_wav_path, model_srate=16000, step_size=0.02, len_frame_time=0
         print(f"Error processing {abs_wav_path}: {e}")
         return np.zeros((1, int(model_srate * len_frame_time)), dtype=np.float32)
 
-def get_stft(abs_wav_path, model_srate=16000, step_size=0.02, n_fft=2047):
+def get_stft(abs_wav_path, model_srate=16000, step_size=0.02, n_fft=2047, len_frame_time=0.064):
     try:
         y, sr = librosa.load(abs_wav_path, sr=model_srate)
-        stft = librosa.stft(y, n_fft=n_fft, 
-                           hop_length=int(step_size * model_srate), 
-                           win_length=1024, 
-                           window='hamming', 
+        
+        hop_length = int(model_srate * step_size)
+        wlen = int(model_srate * len_frame_time)
+        n_frames = 1 + int((len(y) - wlen) / hop_length)
+
+        target_len = wlen + (n_frames - 1) * hop_length
+        if len(y) < target_len:
+            y = np.pad(y, (0, target_len - len(y)), mode='constant')
+        else:
+            y = y[:target_len]
+
+        stft = librosa.stft(y, n_fft=n_fft,
+                           hop_length=hop_length,
+                           win_length=1024,
+                           window='hamming',
                            center=True)
         log_stft = librosa.amplitude_to_db(np.abs(stft), ref=np.max)
         return log_stft
