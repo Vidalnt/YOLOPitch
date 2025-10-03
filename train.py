@@ -10,6 +10,7 @@ from yolo_wav_stft import YoloBody
 from formula_all import *
 import logging
 import config
+import re
 
 log = feature.get_logger()
 
@@ -86,8 +87,7 @@ def train(dataloader, model, loss_fn, optimizer, scaler):
         optimizer.zero_grad()
 
         with autocast(device, dtype=train_dtype, enabled=use_amp):
-            pred = model(X_wav.unsqueeze(0), X_stft.unsqueeze(0))
-            pred = pred.squeeze(0)
+            pred = model(X_wav.unsqueeze(0), X_stft.unsqueeze(0)).squeeze(0)
             loss = loss_fn(pred, y)
 
         scaler.scale(loss).backward()
@@ -171,11 +171,50 @@ def validation(dataloader, model, loss_fn, csv_path=config.validation_csv_path):
 
     return voice_acc
 
-epochs = config.epochs
-os.makedirs(config.save_model_path, exist_ok=True)
-best_voice_acc = 0.0
+def find_latest_checkpoint(save_dir):
+    if not os.path.exists(save_dir):
+        return None, 0, 0.0
 
-for epoch in range(epochs):
+    best_path = os.path.join(save_dir, "yolopitch_best.pth")
+    best_acc = 0.0
+    if os.path.exists(best_path):
+        try:
+            ckpt = torch.load(best_path, map_location=device)
+            model.load_state_dict(ckpt)
+            print(f"Loaded best model from {best_path}")
+        except Exception as e:
+            print(f"Could not load best model: {e}")
+
+    pattern = re.compile(r"yolopitch_(\d+)\.pth")
+    checkpoints = []
+    for f in os.listdir(save_dir):
+        match = pattern.match(f)
+        if match:
+            epoch = int(match.group(1))
+            checkpoints.append((epoch, f))
+
+    if not checkpoints:
+        return None, 0, best_acc
+
+    latest_epoch, latest_file = max(checkpoints, key=lambda x: x[0])
+    try:
+        ckpt_path = os.path.join(save_dir, latest_file)
+        model.load_state_dict(torch.load(ckpt_path, map_location=device))
+        print(f"Resuming from {ckpt_path} (epoch {latest_epoch})")
+        return ckpt_path, latest_epoch, best_acc
+    except Exception as e:
+        print(f"Failed to load {latest_file}: {e}")
+        return None, 0, best_acc
+
+save_dir = config.save_model_path
+os.makedirs(save_dir, exist_ok=True)
+
+_, start_epoch, best_voice_acc = find_latest_checkpoint(save_dir)
+
+epochs = config.epochs
+start_epoch = min(start_epoch, epochs)
+
+for epoch in range(start_epoch, epochs):
     print(f"\nEpoch {epoch+1}/{epochs}")
     log.info(f"Epoch {epoch+1}/{epochs}")
 
@@ -184,15 +223,15 @@ for epoch in range(epochs):
 
     if current_acc > best_voice_acc:
         best_voice_acc = current_acc
-        best_path = os.path.join(config.save_model_path, "yolopitch_best.pth")
+        best_path = os.path.join(save_dir, "yolopitch_best.pth")
         torch.save(model.state_dict(), best_path)
         print(f"New best model saved: {best_path} (Voice Acc: {best_voice_acc:.4f})")
         log.info(f"New best model saved: {best_path} (Voice Acc: {best_voice_acc:.4f})")
 
     if (epoch + 1) % config.save_interval == 0 or epoch == epochs - 1:
-        ckpt_path = os.path.join(config.save_model_path, f"yolopitch_{epoch+1}.pth")
+        ckpt_path = os.path.join(save_dir, f"yolopitch_{epoch+1}.pth")
         torch.save(model.state_dict(), ckpt_path)
 
-final_path = os.path.join(config.save_model_path, "yolopitch_final.pth")
+final_path = os.path.join(save_dir, "yolopitch_final.pth")
 torch.save(model.state_dict(), final_path)
 print("Training completed!")
