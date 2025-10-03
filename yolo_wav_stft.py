@@ -260,9 +260,8 @@ class YoloBody(nn.Module):
         self.head = nn.Conv2d(transition_channels * 16, num_classes, kernel_size=1)
 
     def forward(self, x_wav, x_stft):
-        # Correct input format
-        x_wav = x_wav.unsqueeze(1).unsqueeze(-1)   # (B, T) → (B, 1, T, 1)
-        x_stft = x_stft.unsqueeze(1)               # (B, T, F) → (B, 1, T, F)
+        x_stft = x_stft.transpose(-2, -1).unsqueeze(1)
+        x_wav = x_wav.transpose(-2, -1).unsqueeze(1).mean(dim=-1, keepdim=True)
 
         feat1, feat2, feat3 = self.backbone(x_stft)
         feat1_2, feat2_2, feat3_2 = self.backbone2(x_wav)

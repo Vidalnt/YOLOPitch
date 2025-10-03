@@ -64,7 +64,7 @@ print(f"Logging to TensorBoard at: {logdir}")
 def get_label(path):
     pitch = []
     ref_cent = []
-    with open(path, mode="r") as file:
+    with open(path, mode="r", encoding="gbk") as file:
         for line in file.readlines():
             if 'ptdb' in config.data_name:
                 x = float(line.split(" ")[0])
@@ -90,13 +90,13 @@ def train(dataloader, model, loss_fn, optimizer, scaler, epoch):
     size = len(dataloader.dataset)
     total_loss = 0
     for batch, (X, y) in enumerate(tqdm(dataloader)):
-        X_wav, X_stft = X[0].to(device), X[1].to(device)
-        y = y[0].to(device).long()
+        X_wav, X_stft = X[0].to(device), X[1].to(device)  # (L, T), (F, T) o (B, L, T), (B, F, T)
+        y = y[0].to(device).long()  # (T,) o (B, T)
 
         optimizer.zero_grad()
 
         with autocast(device, dtype=train_dtype, enabled=use_amp):
-            pred = model(X_wav.unsqueeze(0), X_stft.unsqueeze(0)).squeeze(0)
+            pred = model(X_wav.unsqueeze(0), X_stft.unsqueeze(0))
             loss = loss_fn(pred, y)
 
         scaler.scale(loss).backward()
@@ -106,7 +106,7 @@ def train(dataloader, model, loss_fn, optimizer, scaler, epoch):
         total_loss += loss.item()
 
         if batch % 100 == 0:
-            print(f"loss: {loss.item():>7f}  [{batch * len(X):>5d}/{size:>5d}]")
+            print(f"loss: {loss.item():>7f}  [{batch * len(X[0]):>5d}/{size:>5d}]")
 
     avg_loss = total_loss / len(dataloader)
     writer.add_scalar('Loss/Train', avg_loss, global_step=epoch)
@@ -129,7 +129,8 @@ def validation(dataloader, model, loss_fn, epoch, csv_path=config.validation_csv
             filename = Y[1][0]
 
             with autocast(device, dtype=train_dtype, enabled=use_amp):
-                pred = model(X_wav.unsqueeze(0), X_stft.unsqueeze(0)).squeeze(0)
+                pred = model(X_wav.unsqueeze(0), X_stft.unsqueeze(0))
+                pred = pred.squeeze(0)
 
             test_loss += loss_fn(pred, y).item()
             correct += (pred.argmax(1) == y).sum().item()
