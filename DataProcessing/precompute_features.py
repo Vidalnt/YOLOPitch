@@ -20,9 +20,20 @@ def precompute_features():
                 audio_files.append(audio_path)
     
     for audio_path in tqdm(audio_files, desc="Precomputing features"):
-        frames = get_frames(audio_path, step_size=config.hop_size)
-        stft = get_stft(audio_path, step_size=config.hop_size).T
+        frames = get_frames(audio_path, step_size=config.hop_size)  # (T, L)
+        stft = get_stft(audio_path, step_size=config.hop_size).T    # (T, F)
         
+        if frames.ndim != 2:
+            print(f"⚠️  frames.ndim != 2: {frames.shape} for {audio_path}")
+            continue
+        if stft.ndim != 2:
+            print(f"⚠️  stft.ndim != 2: {stft.shape} for {audio_path}")
+            continue
+
+        if frames.shape[0] != stft.shape[0]:
+            print(f"⚠️  T mismatch: frames {frames.shape[0]}, stft {stft.shape[0]} for {audio_path}")
+            continue
+
         base_name = os.path.splitext(os.path.basename(audio_path))[0]
         np.save(os.path.join(config.precomputed_path, f"{base_name}_frames.npy"), frames)
         np.save(os.path.join(config.precomputed_path, f"{base_name}_stft.npy"), stft)
