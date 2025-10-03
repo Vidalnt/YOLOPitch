@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 from torch.amp import autocast, GradScaler
+from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 import os
 from dataset_stft_wav import Net_DataSet
@@ -11,6 +12,7 @@ from formula_all import *
 import logging
 import config
 import re
+import time
 
 log = feature.get_logger()
 
@@ -53,6 +55,12 @@ model = YoloBody(phi='l', num_classes=config.out_class, pretrained=False).to(dev
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.0002, betas=(0.9, 0.999))
 
+timestamp = time.strftime("%Y%m%d_%H%M%S")
+logdir = os.path.join("runs", f"yolopitch_{config.data_name}_{timestamp}")
+os.makedirs(logdir, exist_ok=True)
+writer = SummaryWriter(log_dir=logdir)
+print(f"Logging to TensorBoard at: {logdir}")
+
 def get_label(path):
     pitch = []
     ref_cent = []
@@ -77,9 +85,10 @@ def get_label(path):
             ref_cent.append(cent)
     return pitch, ref_cent
 
-def train(dataloader, model, loss_fn, optimizer, scaler):
+def train(dataloader, model, loss_fn, optimizer, scaler, epoch):
     model.train()
     size = len(dataloader.dataset)
+    total_loss = 0
     for batch, (X, y) in enumerate(tqdm(dataloader)):
         X_wav, X_stft = X[0].to(device), X[1].to(device)
         y = y[0].to(device).long()
@@ -94,10 +103,16 @@ def train(dataloader, model, loss_fn, optimizer, scaler):
         scaler.step(optimizer)
         scaler.update()
 
+        total_loss += loss.item()
+
         if batch % 100 == 0:
             print(f"loss: {loss.item():>7f}  [{batch * len(X):>5d}/{size:>5d}]")
 
-def validation(dataloader, model, loss_fn, csv_path=config.validation_csv_path):
+    avg_loss = total_loss / len(dataloader)
+    writer.add_scalar('Loss/Train', avg_loss, global_step=epoch)
+    print(f"Epoch {epoch} - Avg Train Loss: {avg_loss:.6f}")
+
+def validation(dataloader, model, loss_fn, epoch, csv_path=config.validation_csv_path):
     model.eval()
     size = len(dataloader.dataset)
     num_batches = len(dataloader)
@@ -169,6 +184,23 @@ def validation(dataloader, model, loss_fn, csv_path=config.validation_csv_path):
     log.info(f"Val Acc: {100*accuracy:.1f}%, Voice: {100*voice_acc:.1f}%")
     log.info(f"Sound: {sound_avg}, Music: {music_avg}")
 
+    writer.add_scalar('Loss/Validation', test_loss, global_step=epoch)
+    writer.add_scalar('Accuracy/Total', accuracy, global_step=epoch)
+    writer.add_scalar('Accuracy/Voice', voice_acc, global_step=epoch)
+    if len(sound_avg) >= 6:
+        writer.add_scalar('Metrics/Sound/VDE', sound_avg[0], global_step=epoch)
+        writer.add_scalar('Metrics/Sound/GPE', sound_avg[1], global_step=epoch)
+        writer.add_scalar('Metrics/Sound/FFE', sound_avg[2], global_step=epoch)
+        writer.add_scalar('Metrics/Sound/VP', sound_avg[3], global_step=epoch)
+        writer.add_scalar('Metrics/Sound/VR', sound_avg[4], global_step=epoch)
+        writer.add_scalar('Metrics/Sound/F_score', sound_avg[5], global_step=epoch)
+    if len(music_avg) >= 5:
+        writer.add_scalar('Metrics/Music/VR', music_avg[0], global_step=epoch)
+        writer.add_scalar('Metrics/Music/VFA', music_avg[1], global_step=epoch)
+        writer.add_scalar('Metrics/Music/RPA', music_avg[2], global_step=epoch)
+        writer.add_scalar('Metrics/Music/RCA', music_avg[3], global_step=epoch)
+        writer.add_scalar('Metrics/Music/OA', music_avg[4], global_step=epoch)
+
     return voice_acc
 
 def find_latest_checkpoint(save_dir):
@@ -218,8 +250,8 @@ for epoch in range(start_epoch, epochs):
     print(f"\nEpoch {epoch+1}/{epochs}")
     log.info(f"Epoch {epoch+1}/{epochs}")
 
-    train(train_dataloader, model, loss_fn, optimizer, scaler)
-    current_acc = validation(validation_dataloader, model, loss_fn)
+    train(train_dataloader, model, loss_fn, optimizer, scaler, epoch)
+    current_acc = validation(validation_dataloader, model, loss_fn, epoch)
 
     if current_acc > best_voice_acc:
         best_voice_acc = current_acc
@@ -234,4 +266,6 @@ for epoch in range(start_epoch, epochs):
 
 final_path = os.path.join(save_dir, "yolopitch_final.pth")
 torch.save(model.state_dict(), final_path)
+
+writer.close()
 print("Training completed!")
