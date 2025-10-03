@@ -15,14 +15,26 @@ def get_frames(abs_wav_path, model_srate=16000, step_size=0.02, len_frame_time=0
         
         hop_length = int(sample_rate * step_size)  
         wlen = int(sample_rate * len_frame_time)
+        
+        if sample_rate != model_srate:
+            audio = librosa.resample(audio, orig_sr=sample_rate, target_sr=model_srate)
+            sample_rate = model_srate
+            wlen = int(sample_rate * len_frame_time)
+
         n_frames = 1 + int((len(audio) - wlen) / hop_length)
         
         if n_frames <= 0:
             return np.zeros((1, wlen), dtype=np.float32)
             
+        
+        total_len_needed = wlen + (n_frames - 1) * hop_length
+        if len(audio) > total_len_needed:
+            audio = audio[:total_len_needed]
+        elif len(audio) < total_len_needed:
+            audio = np.pad(audio, (0, total_len_needed - len(audio)), mode='constant')
+
         frames = as_strided(audio, shape=(wlen, n_frames),
                             strides=(audio.itemsize, hop_length * audio.itemsize))
-        frames = frames.transpose().copy()
         
         frames -= np.mean(frames, axis=1)[:, np.newaxis]
         std = np.std(frames, axis=1)
@@ -30,38 +42,37 @@ def get_frames(abs_wav_path, model_srate=16000, step_size=0.02, len_frame_time=0
         frames /= std[:, np.newaxis]
         frames[np.isnan(frames)] = 0
         
-        if sample_rate != model_srate:
-            frames = librosa.resample(frames.T, orig_sr=sample_rate, target_sr=model_srate).T
-            
         return frames
     except Exception as e:
         print(f"Error processing {abs_wav_path}: {e}")
-        return np.zeros((1, int(model_srate * len_frame_time)), dtype=np.float32)
+        wlen = int(model_srate * len_frame_time)
+        return np.zeros((1, wlen), dtype=np.float32)
 
 def get_stft(abs_wav_path, model_srate=16000, step_size=0.02, n_fft=2047, len_frame_time=0.064):
     try:
-        y, sr = librosa.load(abs_wav_path, sr=model_srate)
+        y, sr = librosa.load(abs_wav_path, sr=model_srate, mono=True)
         
         hop_length = int(model_srate * step_size)
         wlen = int(model_srate * len_frame_time)
+        
         n_frames = 1 + int((len(y) - wlen) / hop_length)
 
-        target_len = wlen + (n_frames - 1) * hop_length
-        if len(y) < target_len:
-            y = np.pad(y, (0, target_len - len(y)), mode='constant')
-        else:
-            y = y[:target_len]
+        total_len_needed = wlen + (n_frames - 1) * hop_length
+        if len(y) > total_len_needed:
+            y = y[:total_len_needed]
 
         stft = librosa.stft(y, n_fft=n_fft,
                            hop_length=hop_length,
-                           win_length=1024,
+                           win_length=wlen,
                            window='hamming',
-                           center=True)
+                           center=False)
         log_stft = librosa.amplitude_to_db(np.abs(stft), ref=np.max)
         return log_stft
     except Exception as e:
         print(f"Error processing STFT of {abs_wav_path}: {e}")
-        return np.zeros((n_fft // 2 + 1, 10), dtype=np.float32)
+        n_freq_bins = n_fft // 2 + 1
+        return np.zeros((n_freq_bins, 10), dtype=np.float32)
+
 
 class Net_DataSet(Dataset):
     def __init__(self, path):
@@ -109,6 +120,7 @@ class Net_DataSet(Dataset):
         if not os.path.exists(wav_path):
             print(f"Audio file not found: {wav_path}")
             return self.__getitem__((index + 1) % self.__len__())
+        
         try:
              base_name = os.path.splitext(wavname)[0]
              frames_path = os.path.join(config.precomputed_path, f"{base_name}_frames.npy")
@@ -117,13 +129,13 @@ class Net_DataSet(Dataset):
              stft = np.load(stft_path)
         except:
             frames = get_frames(wav_path, step_size=config.hop_size)
-            stft = get_stft(wav_path, step_size=config.hop_size).T
-            min_len = min(len(frames), len(stft))
-            frames = frames[:min_len]
-            stft = stft[:min_len]
-        
-        label = label[:len(frames)]
-        
+            stft = get_stft(wav_path, step_size=config.hop_size, len_frame_time=config.len_frame_time).T
+
+        min_len = min(len(frames), len(stft), len(label))
+        frames = frames[:min_len]
+        stft = stft[:min_len]
+        label = label[:min_len]
+
         label1 = []
         for x in label:
             try:
@@ -132,10 +144,7 @@ class Net_DataSet(Dataset):
             except:
                 label1.append(0)
         
-        min_len = min(len(label1), len(frames))
         label1 = label1[:min_len]
-        frames = frames[:min_len]
-        stft = stft[:min_len]
         
         label1 = torch.tensor(label1).squeeze().long()
         frames = torch.tensor(frames).float().transpose(0, 1)
@@ -146,9 +155,7 @@ class Net_DataSet(Dataset):
 if __name__ == "__main__":
     path = config.test_path
     s = Net_DataSet(path)
-    print("s[2]:",s[6])
-    # label = s[6][1].numpy()
-    # label = list(label)
-    # print(label)
-    print(s[6][0][0].shape,s[6][0][1].shape)
-    print(len(s[6][1]))
+    print("s[6]:", s[6])
+    print("frames shape:", s[6][0][0].shape)
+    print("stft shape:", s[6][0][1].shape)
+    print("label length:", len(s[6][1][0]))```
